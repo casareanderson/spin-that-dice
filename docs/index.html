@@ -41,17 +41,19 @@ h1 em{font-style:normal; color:var(--accent)}
 .die{
   --s:clamp(160px,44vw,230px);
   width:var(--s); height:var(--s); margin:clamp(26px,6vh,48px) 0 0;
-  border-radius:22%; cursor:pointer; position:relative; border:none; padding:14%;
+  border-radius:22%; cursor:pointer; position:relative; border:none;
+  padding:calc(var(--s) * .13);
   background:linear-gradient(157deg,#FDFCFA 0%,#E4E0D8 48%,#C9C4B9 100%);
   box-shadow:0 2px 0 rgba(255,255,255,.6) inset, 0 -10px 22px rgba(0,0,0,.18) inset,
              0 26px 50px -12px rgba(0,0,0,.75), 0 0 0 1px rgba(0,0,0,.5),
              0 0 60px -12px rgba(242,160,61,.4);
-  display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:4%;
+  display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:6%;
   transition:transform .16s cubic-bezier(.34,1.56,.64,1);
 }
 .die:active{transform:translateY(2px) scale(.97)}
 .die:focus-visible{outline:2px solid var(--accent); outline-offset:6px}
-.pip{width:100%; height:100%; border-radius:50%;
+.pip{width:88%; aspect-ratio:1; align-self:center; justify-self:center;
+  border-radius:50%;
   background:radial-gradient(circle at 34% 30%,#3A3A42,#0A0A0C 70%);
   box-shadow:0 1px 1px rgba(255,255,255,.45); opacity:0; transition:opacity .08s}
 .pip.on{opacity:1}
@@ -100,11 +102,11 @@ footer{margin-top:30px; color:#5C5A62; font-size:11px; font-family:"Space Mono",
   <p class="eyebrow" id="eyebrow">warming up…</p>
   <h1>Spin That <em>Dice</em></h1>
 
-  <button class="die" id="die" aria-label="Roll the die">
+  <div class="die" id="die" role="button" tabindex="0" aria-label="Roll the die">
     <span class="pip"></span><span class="pip"></span><span class="pip"></span>
     <span class="pip"></span><span class="pip"></span><span class="pip"></span>
     <span class="pip"></span><span class="pip"></span><span class="pip"></span>
-  </button>
+  </div>
   <p class="hint" id="hint">tap the die — <b>anything</b></p>
 
   <div class="lane" id="lane"></div>

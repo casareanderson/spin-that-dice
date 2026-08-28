@@ -1,5 +1,9 @@
 # spin-that-dice
 
+**[Try it →](https://spin-that-dice.cn1-lab.uk)**
+
+![Spin That Dice](media/screenshot.png)
+
 A jukebox dice for Black music. Tap the die, get a random track from a category,
 and it plays. Built for a tablet propped up at a party — black, one big target,
 no menus, no browsing.
