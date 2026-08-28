@@ -137,6 +137,29 @@ Drum & Bass, Jungle, Rock, Indie, Punk, Metal, Pop, 80s, 90s Pop, 2000s Pop,
 Jazz, Blues, Gospel, Country, Latin, Reggaeton, Soca, K-Pop, Bollywood, Lo-fi,
 Classical and more. Add your own by adding queries.
 
+## Optional: let people use their own Spotify
+
+Set `spotify_client_id` in `config.json` (it is public, not a secret) and add the
+page's exact URL as a redirect URI on your Spotify app. A small **Connect
+Spotify** link appears; one redirect later, a roll plays on whatever Spotify
+device is already awake — the tablet's own Spotify app, a speaker, anything.
+Leave the field empty and the link never appears.
+
+It uses **Authorization Code + PKCE**, so no client secret is ever in the page,
+and the token lives only in that browser's `localStorage`.
+
+Two constraints come from Spotify, not from this code:
+
+- **The redirect URI must be HTTPS**, with one exception for literal loopback
+  `http://127.0.0.1:PORT`. A LAN address like `http://nas:8770` is rejected, so
+  serve the page over TLS or run it on the listening machine.
+- **Premium is required, and a Development Mode app allows 5 accounts.** Guests
+  at a party cannot each log in. That cap is Spotify's and is not liftable
+  without Extended Quota approval.
+
+Which is the argument for the self-hosted backends above: no login, no Premium,
+no user cap, and autoplay is just `audio.play()`.
+
 ## Playback
 
 Uses the [Spotify iFrame

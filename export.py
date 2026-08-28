@@ -34,6 +34,8 @@ OUT.mkdir(parents=True, exist_ok=True)
     {"built": datetime.now(timezone.utc).isoformat(timespec="seconds"), "cats": out},
     ensure_ascii=False, separators=(",", ":")))
 shutil.copy(HERE / "web" / "index.html", OUT / "index.html")
+if not (OUT / "config.json").exists():          # never clobber a deployed client id
+    shutil.copy(HERE / "web" / "config.json", OUT / "config.json")
 (OUT / ".nojekyll").write_text("")
 if os.environ.get("SPIN_DOMAIN"):
     (OUT / "CNAME").write_text(os.environ["SPIN_DOMAIN"] + "\n")
