@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-DATA = HERE / "data"
+DATA = Path(os.environ.get("SPIN_DATA", HERE / "data"))
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE / "docs"
 
 cats = json.loads((DATA / "categories.json").read_text())
