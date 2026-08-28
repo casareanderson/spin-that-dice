@@ -71,8 +71,27 @@ sleep mid-party.
 | `SPIN_PORT` / `SPIN_HOST` | `8770` / `127.0.0.1` | listen address |
 | `SPIN_MARKET` | `GB` | Spotify market for results |
 | `SPIN_TARGET` | `150` | tracks to hold per category |
+| `SPIN_MAX_OFFSET` | `120` | how deep to paginate (see below) |
 | `SPIN_CALLS_PER_HOUR` | `60` | hard ceiling on API requests |
 | `SPIN_DATA` / `SPIN_WEB` | `./data` / `./web` | asset locations |
+
+## Result quality
+
+Search results get worse the deeper you page. Of 104 tracks hand-dropped from the
+first crate, **42 were 2020+ SEO uploads** that only surface deep in a result set,
+so `SPIN_MAX_OFFSET` caps depth at 120 by default.
+
+A pattern filter (`looks_like_filler`) rejects outright content farms - "type
+beat" accounts, karaoke, `Various Artists`, artists named after the category.
+Measured against that hand-classified set it catches **8% of the junk with zero
+false positives** against 92 hand-kept tracks. It is deliberately conservative:
+most of what was wrong with the first crate was *genre mismatch*, not spam, and
+nothing here can detect that - Spotify removed artist `genres` for
+Development Mode apps in Feb 2026.
+
+```bash
+python3 -m unittest discover -s tests    # offline, no creds, no network
+```
 
 ## Categories
 

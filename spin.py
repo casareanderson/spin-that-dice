@@ -11,7 +11,7 @@ keeps growing toward "the whole catalogue" between parties.
 Spotify's quota window re-arms if you keep calling while throttled, so a 429
 trips a circuit breaker that honours Retry-After and stops calling entirely.
 """
-import json, os, random, sys, threading, time
+import json, os, random, re, sys, threading, time
 from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -31,6 +31,34 @@ CALLS_PER_HOUR = int(os.environ.get("SPIN_CALLS_PER_HOUR", "60"))
 CATS = json.loads((DATA / "categories.json").read_text())
 SEED = json.loads((DATA / "crate.json").read_text()) if (DATA / "crate.json").exists() else {}
 INDEX_PATH = DATA / "index.json"
+MAX_OFFSET = int(os.environ.get("SPIN_MAX_OFFSET", "120"))
+
+# Measured, not guessed: of 104 tracks hand-dropped from the first crate, 42 were
+# 2020+ SEO uploads that only appear deep in a result set -- so depth is capped
+# above. These patterns catch the outright content farms (8% of that junk, with
+# zero false positives against 92 hand-kept tracks). The rest was genre mismatch,
+# which nothing here can detect: Spotify removed artist `genres` for dev-mode apps.
+BAD_TITLE = re.compile(r"(karaoke|tribute|made famous by|originally performed|type beat|"
+                       r"study (music|beats)|sleep music|workout mix|8d audio|nightcore|"
+                       r"ultra slowed)", re.I)
+BAD_ARTIST = re.compile(r"(\bbeats\b|\bbeatz\b|\binstrumentals\b|karaoke|tribute band|"
+                        r"\blegends\b|\bvault\b|\ball stars\b|hip hop beat|"
+                        r"\bcollective\b|\bbeat nation\b)", re.I)
+
+
+def looks_like_filler(track, cat):
+    """Return a reason string if this is content-farm filler, else None."""
+    a, n = track.get("a", ""), track.get("n", "")
+    if re.match(r"^(various artists|unknown artist)$", a.strip(), re.I):
+        return "various artists"
+    if BAD_TITLE.search(n):
+        return "title"
+    if BAD_ARTIST.search(a):
+        return "artist"
+    words = [w for w in re.split(r"[^a-z0-9]+", cat.lower()) if len(w) > 2]
+    if words and all(w in a.lower() for w in words):
+        return "named after the category"
+    return None
 
 
 # ---------------------------------------------------------------- credentials
@@ -133,7 +161,12 @@ class Index:
             tracks = self.d.get(cat, {}).get("tracks", [])
             if not tracks:
                 return None
-            seen = self.recent.setdefault(cat, deque(maxlen=min(40, max(1, len(tracks) // 2))))
+            want = min(40, max(1, len(tracks) // 2))
+            seen = self.recent.get(cat)
+            if seen is None or seen.maxlen != want:
+                # the category grows, so the no-repeat window has to grow with it
+                seen = deque(seen or (), maxlen=want)
+                self.recent[cat] = seen
             fresh = [t for t in tracks if t["id"] not in seen] or tracks
             t = random.choice(fresh)
             seen.append(t["id"])
@@ -168,7 +201,7 @@ def fetch(cat):
     global _blocked_until
     spec = CATS[cat]
     used = index.offsets(cat)
-    pool = [o for o in range(0, 400, 10) if o not in used] or list(range(0, 400, 10))
+    pool = [o for o in range(0, MAX_OFFSET, 10) if o not in used] or list(range(0, MAX_OFFSET, 10))
     offset = random.choice(pool)
     r = requests.get(
         "https://api.spotify.com/v1/search",
@@ -183,18 +216,20 @@ def fetch(cat):
         raise RuntimeError(f"429 quota, {wait // 3600}h{wait % 3600 // 60:02d}m")
     r.raise_for_status()
     items = [t for t in (r.json().get("tracks") or {}).get("items") or [] if t and t.get("id")]
-    got = index.add(cat, [{
+    cand = [{
         "id": t["id"], "n": t["name"],
         "a": ", ".join(a["name"] for a in t.get("artists") or []),
         "y": (t.get("album") or {}).get("release_date", "")[:4],
-    } for t in items], offset)
-    return got
+    } for t in items]
+    clean = [t for t in cand if not looks_like_filler(t, cat)]
+    return index.add(cat, clean, offset)
 
 
 def topper():
     """Background top-up. Fills the thinnest categories first, within budget."""
     while True:
         try:
+            dirty = False
             if not blocked_for():
                 thin = sorted(CATS, key=index.count)
                 for cat in thin:
@@ -205,11 +240,13 @@ def topper():
                     try:
                         n = fetch(cat)
                         sys.stderr.write(f"topup {cat}: +{n} (now {index.count(cat)})\n")
-                        index.save()
+                        dirty = True
                     except Exception as e:
                         sys.stderr.write(f"topup {cat} failed: {e}\n")
                         break
                     time.sleep(2)
+                if dirty:
+                    index.save()   # one write per pass, not one per request
         except Exception as e:
             sys.stderr.write(f"topper: {e}\n")
         time.sleep(30)
