@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Spin That Dice">
+<meta name="theme-color" content="#08080A">
+<title>Spin That Dice</title>
+<script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Karla:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap">
+<style>
+:root{
+  --bg:#08080A; --panel:#101014; --panel-2:#16161C; --line:#24242C;
+  --text:#F2F0EC; --dim:#8B8890; --accent:#F2A03D; --accent-ink:#141014; --bad:#E2503C;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:Karla,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.5; -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(ellipse 70% 45% at 50% 0%, rgba(242,160,61,.13), transparent 70%);
+  background-repeat:no-repeat; background-attachment:fixed;
+  display:flex; flex-direction:column; align-items:center;
+  padding:max(18px,env(safe-area-inset-top)) 18px calc(48px + env(safe-area-inset-bottom));
+  -webkit-user-select:none; user-select:none; overscroll-behavior:none;
+}
+.wrap{width:100%; max-width:620px; text-align:center; display:flex; flex-direction:column; align-items:center}
+.eyebrow{font-family:"Space Mono",ui-monospace,monospace; font-size:10.5px; letter-spacing:.26em;
+  text-transform:uppercase; color:var(--dim); margin:0; min-height:1.3em}
+h1{font-family:Anton,Impact,sans-serif; font-weight:400; margin:.22em 0 0;
+  font-size:clamp(38px,10.5vw,66px); line-height:.9; text-transform:uppercase}
+h1 em{font-style:normal; color:var(--accent)}
+
+.die{
+  --s:clamp(160px,44vw,230px);
+  width:var(--s); height:var(--s); margin:clamp(26px,6vh,48px) 0 0;
+  border-radius:22%; cursor:pointer; position:relative; border:none; padding:14%;
+  background:linear-gradient(157deg,#FDFCFA 0%,#E4E0D8 48%,#C9C4B9 100%);
+  box-shadow:0 2px 0 rgba(255,255,255,.6) inset, 0 -10px 22px rgba(0,0,0,.18) inset,
+             0 26px 50px -12px rgba(0,0,0,.75), 0 0 0 1px rgba(0,0,0,.5),
+             0 0 60px -12px rgba(242,160,61,.4);
+  display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:4%;
+  transition:transform .16s cubic-bezier(.34,1.56,.64,1);
+}
+.die:active{transform:translateY(2px) scale(.97)}
+.die:focus-visible{outline:2px solid var(--accent); outline-offset:6px}
+.pip{width:100%; height:100%; border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,#3A3A42,#0A0A0C 70%);
+  box-shadow:0 1px 1px rgba(255,255,255,.45); opacity:0; transition:opacity .08s}
+.pip.on{opacity:1}
+@keyframes tumble{0%{transform:rotate(0) scale(1)}25%{transform:rotate(-16deg) scale(1.06)}
+  50%{transform:rotate(14deg) scale(.95)}75%{transform:rotate(-8deg) scale(1.04)}100%{transform:rotate(0) scale(1)}}
+.die.rolling{animation:tumble .5s ease-in-out}
+.hint{font-family:"Space Mono",monospace; font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--dim); margin:16px 0 0}
+.hint b{color:var(--accent); font-weight:400}
+
+.lane{margin:22px 0 0; display:flex; gap:8px; justify-content:center; flex-wrap:wrap}
+.chip{font-family:"Space Mono",monospace; font-size:12px; background:var(--panel); color:var(--text);
+  border:1px solid var(--line); border-radius:999px; padding:10px 16px; cursor:pointer; transition:.14s}
+.chip:active{transform:scale(.96)}
+.chip[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:700}
+.chip[disabled]{opacity:.3; cursor:default}
+.more{color:var(--dim); text-decoration:underline; text-underline-offset:3px; background:none; border:none;
+  font-family:"Space Mono",monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  cursor:pointer; margin-top:16px; padding:8px}
+.all{display:none; margin:14px 0 0; padding:16px; background:var(--panel); border:1px solid var(--line);
+  border-radius:14px; gap:7px; flex-wrap:wrap; justify-content:center}
+.all.open{display:flex}
+.all .chip{font-size:11.5px; padding:8px 13px}
+
+.plate{width:100%; margin:26px 0 0; background:var(--panel); border:1px solid var(--line);
+  border-radius:16px; padding:20px; text-align:left; display:none}
+.plate.show{display:block; animation:rise .32s ease}
+@keyframes rise{from{opacity:0; transform:translateY(10px)}to{opacity:1; transform:none}}
+.tagrow{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px}
+.tag{font-family:"Space Mono",monospace; font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+  background:var(--accent); color:var(--accent-ink); padding:4px 9px; border-radius:4px; font-weight:700}
+.meta{font-family:"Space Mono",monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--dim); border:1px solid var(--line); padding:3px 8px; border-radius:4px}
+.track{font-family:Anton,Impact,sans-serif; font-size:clamp(23px,5.4vw,32px); line-height:1.06;
+  text-transform:uppercase; margin:0}
+.artist{color:var(--dim); margin:5px 0 0; font-size:15px}
+.embed{width:100%; min-height:80px; border-radius:12px; margin-top:15px; display:block; overflow:hidden}
+.embed iframe{border:0; border-radius:12px; display:block; width:100%}
+.err{color:var(--bad); font-size:14px; margin:0}
+footer{margin-top:30px; color:#5C5A62; font-size:11px; font-family:"Space Mono",monospace; letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow" id="eyebrow">warming up…</p>
+  <h1>Spin That <em>Dice</em></h1>
+
+  <button class="die" id="die" aria-label="Roll the die">
+    <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+    <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+    <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+  </button>
+  <p class="hint" id="hint">tap the die — lane: <b>any</b></p>
+
+  <div class="lane" id="lane"></div>
+  <button class="more" id="moreBtn" aria-expanded="false">All categories</button>
+  <div class="all" id="all"></div>
+
+  <div class="plate" id="plate">
+    <div class="tagrow"><span class="tag" id="pCat"></span><span class="meta" id="pYear"></span><span class="meta" id="pHave"></span></div>
+    <p class="track" id="pTrack"></p>
+    <p class="artist" id="pArtist"></p>
+    <div class="embed" id="player"></div>
+    <p class="err" id="pErr" hidden></p>
+  </div>
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const FACES={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+const die=document.getElementById('die'), pips=[...die.querySelectorAll('.pip')];
+const hint=document.getElementById('hint'), lane=document.getElementById('lane');
+const all=document.getElementById('all'), plate=document.getElementById('plate');
+const eyebrow=document.getElementById('eyebrow'), foot=document.getElementById('foot');
+const moreBtn=document.getElementById('moreBtn');
+
+let CATS=[], pick='any', busy=false;
+const pCat=document.getElementById('pCat'), pYear=document.getElementById('pYear'),
+      pHave=document.getElementById('pHave'), pTrack=document.getElementById('pTrack'),
+      pArtist=document.getElementById('pArtist'), pErr=document.getElementById('pErr');
+
+// Spotify's iFrame API: one controller, reloaded each roll, so we can call play().
+// A plain <iframe> per roll can never autoplay - nothing to call play() on.
+let sp=null, spReady=false, pending=null;
+window.onSpotifyIframeApiReady = (API) => {
+  API.createController(document.getElementById('player'),
+    {width:'100%', height:80, uri:''},
+    (ctrl)=>{
+      sp=ctrl; spReady=true;
+      ctrl.addListener('ready',()=>{ try{ ctrl.play(); }catch(e){} });
+      if(pending){ const u=pending; pending=null; playUri(u); }
+    });
+};
+function playUri(uri){
+  if(!spReady||!sp){ pending=uri; return; }
+  try{
+    sp.loadUri(uri);
+    // 'ready' covers most cases; this catches the ones where it has already fired
+    setTimeout(()=>{ try{ sp.play(); }catch(e){} }, 350);
+  }catch(e){}
+}
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const face=n=>pips.forEach((p,i)=>p.classList.toggle('on',FACES[n].includes(i)));
+
+// keep the iPad awake through a party
+let wl=null;
+async function keepAwake(){
+  try{ if('wakeLock' in navigator && !wl){ wl=await navigator.wakeLock.request('screen');
+    wl.addEventListener('release',()=>{wl=null;}); } }catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') keepAwake(); });
+
+function setPick(c){
+  pick=c;
+  document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.c===c)));
+  hint.innerHTML='tap the die — lane: <b>'+esc(c)+'</b>';
+}
+function chip(name,have){
+  const b=document.createElement('button');
+  b.className='chip'; b.dataset.c=name; b.textContent=name;
+  b.setAttribute('aria-pressed',String(name===pick));
+  if(have===0){ b.disabled=true; b.title='still filling'; }
+  b.onclick=()=>{ setPick(name); if(!busy) roll(); };
+  return b;
+}
+
+async function boot(){
+  try{
+    const meta=await (await fetch('/api/categories')).json();
+    CATS=meta.cats;
+    const top=[...CATS].filter(c=>c.have>0).sort((a,b)=>b.have-a.have).slice(0,6);
+    lane.append(chip('any'), ...top.map(c=>chip(c.name,c.have)));
+    all.append(...CATS.map(c=>chip(c.name,c.have)));
+    const total=CATS.reduce((n,c)=>n+c.have,0), ready=CATS.filter(c=>c.have).length;
+    eyebrow.textContent=total+' tracks indexed · '+ready+' of '+CATS.length+' categories ready';
+    foot.textContent=meta.blocked_min
+      ? 'catalogue top-up paused '+Math.floor(meta.blocked_min/60)+'h'+String(meta.blocked_min%60).padStart(2,'0')+'m · rolls unaffected'
+      : 'the crate fills itself in the background';
+  }catch(e){
+    eyebrow.textContent='could not reach the roll service';
+    plate.className='plate show'; plate.innerHTML='<p class="err">API unreachable: '+esc(e.message)+'</p>';
+  }
+  face(5);
+}
+
+moreBtn.onclick=()=>{
+  const open=all.classList.toggle('open');
+  moreBtn.setAttribute('aria-expanded',String(open));
+  moreBtn.textContent=open?'Hide categories':'All categories';
+};
+
+async function roll(){
+  if(busy) return; busy=true; keepAwake();
+  die.classList.add('rolling');
+  const shuffle=setInterval(()=>face(1+Math.floor(Math.random()*6)),70);
+  const settle=new Promise(r=>setTimeout(r,520));
+  try{
+    const [res]=await Promise.all([fetch('/api/roll?cat='+encodeURIComponent(pick)),settle]);
+    const d=await res.json();
+    clearInterval(shuffle); face(1+Math.floor(Math.random()*6));
+    if(!res.ok||d.error) throw new Error(d.error||('HTTP '+res.status));
+    const t=d.track;
+    plate.className='plate show';
+    pErr.hidden=true;
+    pCat.textContent=d.cat;
+    pYear.textContent=t.y||''; pYear.hidden=!t.y;
+    pHave.textContent=d.have+' in the crate';
+    pTrack.textContent=t.n; pArtist.textContent=t.a;
+    playUri('spotify:track:'+t.id);
+  }catch(e){
+    clearInterval(shuffle); face(1);
+    plate.className='plate show';
+    pErr.hidden=false; pErr.textContent='roll failed: '+e.message;
+  }finally{ die.classList.remove('rolling'); busy=false; }
+}
+
+die.onclick=roll;
+document.addEventListener('keydown',e=>{ if(e.code==='Space'||e.code==='Enter'){e.preventDefault(); roll();} });
+boot();
+</script>
+</body>
+</html>
