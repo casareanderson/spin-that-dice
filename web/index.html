@@ -105,6 +105,7 @@ footer{margin-top:30px; color:#5C5A62; font-size:11px; font-family:"Space Mono",
   <p class="hint" id="hint">tap the die — lane: <b>any</b></p>
 
   <div class="lane" id="lane"></div>
+  <button class="more" id="spBtn" hidden></button>
   <button class="more" id="moreBtn" aria-expanded="false">All categories</button>
   <div class="all" id="all"></div>
 
@@ -126,6 +127,7 @@ const hint=document.getElementById('hint'), lane=document.getElementById('lane')
 const all=document.getElementById('all'), plate=document.getElementById('plate');
 const eyebrow=document.getElementById('eyebrow'), foot=document.getElementById('foot');
 const moreBtn=document.getElementById('moreBtn');
+const spBtn=document.getElementById('spBtn');
 
 let CATS=[], pick='any', busy=false;
 let STATIC=null;   // set when there is no /api (static build): {cat: [tracks]}
@@ -156,6 +158,74 @@ function playUri(uri){
 }
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const face=n=>pips.forEach((p,i)=>p.classList.toggle('on',FACES[n].includes(i)));
+
+// ---------------------------------------------------------------- spotify pkce
+// Optional. Set spotify_client_id in config.json and add this page's URL as a
+// redirect URI on the Spotify app. No secret lives here - PKCE is built for
+// public clients. Once connected, a roll plays on whatever Spotify device is
+// already awake (the tablet's own Spotify app, a speaker, anything).
+// Still needs Premium, and the app's Development Mode caps it at 5 accounts.
+const SP='spin.sp';
+let spCfg='', spTok=null;
+const store={
+  get(){ try{ return JSON.parse(localStorage.getItem(SP)||'null'); }catch(e){ return null; } },
+  set(v){ try{ localStorage.setItem(SP,JSON.stringify(v)); }catch(e){} },
+  clear(){ try{ localStorage.removeItem(SP); }catch(e){} }
+};
+const b64url=b=>btoa(String.fromCharCode(...new Uint8Array(b)))
+  .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+async function challenge(v){ return b64url(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v))); }
+const redirectUri=()=>location.origin+location.pathname;
+
+async function spConnect(){
+  const verifier=b64url(crypto.getRandomValues(new Uint8Array(48)));
+  sessionStorage.setItem('spin.v',verifier);
+  const q=new URLSearchParams({client_id:spCfg, response_type:'code',
+    redirect_uri:redirectUri(), code_challenge_method:'S256',
+    code_challenge:await challenge(verifier),
+    scope:'user-modify-playback-state user-read-playback-state'});
+  location.href='https://accounts.spotify.com/authorize?'+q;
+}
+async function spExchange(code){
+  const verifier=sessionStorage.getItem('spin.v')||'';
+  const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams({client_id:spCfg, grant_type:'authorization_code',
+      code, redirect_uri:redirectUri(), code_verifier:verifier})});
+  if(!r.ok) throw new Error('token exchange failed');
+  const j=await r.json();
+  store.set({at:j.access_token, rt:j.refresh_token, exp:Date.now()+(j.expires_in-60)*1000});
+}
+async function spToken(){
+  let t=store.get();
+  if(!t) return null;
+  if(Date.now()<t.exp) return t.at;
+  const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams({client_id:spCfg, grant_type:'refresh_token', refresh_token:t.rt})});
+  if(!r.ok){ store.clear(); spPaint(); return null; }
+  const j=await r.json();
+  t={at:j.access_token, rt:j.refresh_token||t.rt, exp:Date.now()+(j.expires_in-60)*1000};
+  store.set(t); return t.at;
+}
+function spPaint(){
+  if(!spCfg){ spBtn.hidden=true; return; }
+  spBtn.hidden=false;
+  spBtn.textContent=store.get()?'Spotify connected':'Connect Spotify';
+  spBtn.onclick=()=>{ if(store.get()){ store.clear(); spPaint(); } else spConnect(); };
+}
+// returns true if it played on a real device
+async function spPlay(id){
+  const at=await spToken();
+  if(!at) return false;
+  const r=await fetch('https://api.spotify.com/v1/me/player/play',{method:'PUT',
+    headers:{Authorization:'Bearer '+at,'Content-Type':'application/json'},
+    body:JSON.stringify({uris:['spotify:track:'+id]})});
+  if(r.status===204) return true;
+  if(r.status===404) hint.innerHTML='open Spotify on a device first';   // no active device
+  if(r.status===403) hint.innerHTML='spotify says premium required';
+  return false;
+}
 
 // keep the iPad awake through a party
 let wl=null;
@@ -192,6 +262,13 @@ async function loadMeta(){
 }
 
 async function boot(){
+  try{ spCfg=(await (await fetch('config.json')).json()).spotify_client_id||''; }catch(e){}
+  const code=new URLSearchParams(location.search).get('code');
+  if(code && spCfg){
+    try{ await spExchange(code); }catch(e){}
+    history.replaceState({},'',redirectUri());       // keep the URL clean
+  }
+  spPaint();
   try{
     const meta=await loadMeta();
     CATS=meta.cats;
@@ -247,7 +324,10 @@ async function roll(){
     if(d.have>=0){ pHave.hidden=false; pHave.textContent=d.have+' in the crate'; }
     else pHave.hidden=true;
     pTrack.textContent=t.n; pArtist.textContent=t.a;
-    if(t.stream){
+    if(t.id && await spPlay(t.id)){
+      // playing on their own Spotify device - the embed would only duplicate it
+      audio.pause(); audio.hidden=true; player.hidden=true;
+    }else if(t.stream){
       // self-hosted backend: real audio, so autoplay is just a play() call
       player.hidden=true; audio.hidden=false;
       audio.src=t.stream;
