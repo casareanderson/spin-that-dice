@@ -1,0 +1,4 @@
+{
+  "_comment": "Optional Spotify login. Put your app's Client ID here (it is public, not a secret) and add this page's exact URL as a redirect URI in the Spotify dashboard. Leave empty to hide the button and use the embed instead.",
+  "spotify_client_id": ""
+}
