@@ -7,6 +7,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Spin That Dice">
 <meta name="theme-color" content="#08080A">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <title>Spin That Dice</title>
 <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -102,7 +105,7 @@ footer{margin-top:30px; color:#5C5A62; font-size:11px; font-family:"Space Mono",
     <span class="pip"></span><span class="pip"></span><span class="pip"></span>
     <span class="pip"></span><span class="pip"></span><span class="pip"></span>
   </button>
-  <p class="hint" id="hint">tap the die — lane: <b>any</b></p>
+  <p class="hint" id="hint">tap the die — <b>anything</b></p>
 
   <div class="lane" id="lane"></div>
   <button class="more" id="spBtn" hidden></button>
@@ -129,7 +132,11 @@ const eyebrow=document.getElementById('eyebrow'), foot=document.getElementById('
 const moreBtn=document.getElementById('moreBtn');
 const spBtn=document.getElementById('spBtn');
 
-let CATS=[], pick='any', busy=false;
+let CATS=[], busy=false;
+// multi-select: an empty set means "anything", otherwise roll across the chosen lanes
+let picks=new Set();
+const PK='spin.lanes';
+try{ (JSON.parse(localStorage.getItem(PK)||'[]')||[]).forEach(c=>picks.add(c)); }catch(e){}
 let STATIC=null;   // set when there is no /api (static build): {cat: [tracks]}
 const audio=document.getElementById('audio'), player=document.getElementById('player');
 const pCat=document.getElementById('pCat'), pYear=document.getElementById('pYear'),
@@ -235,17 +242,32 @@ async function keepAwake(){
 }
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') keepAwake(); });
 
-function setPick(c){
-  pick=c;
-  document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.c===c)));
-  hint.innerHTML='tap the die — lane: <b>'+esc(c)+'</b>';
+function paintPicks(){
+  document.querySelectorAll('.chip').forEach(b=>{
+    const on = b.dataset.c==='any' ? picks.size===0 : picks.has(b.dataset.c);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  const n=picks.size;
+  hint.innerHTML = n===0 ? 'tap the die — <b>anything</b>'
+    : n===1 ? 'tap the die — <b>'+esc([...picks][0])+'</b>'
+    : 'tap the die — <b>'+n+' lanes</b>';
+  try{ localStorage.setItem(PK, JSON.stringify([...picks])); }catch(e){}
+}
+function togglePick(c){
+  if(c==='any') picks.clear();
+  else if(picks.has(c)) picks.delete(c);
+  else picks.add(c);
+  paintPicks();
+}
+function rollCat(){
+  const chosen=[...picks];
+  return chosen.length ? chosen[Math.floor(Math.random()*chosen.length)] : 'any';
 }
 function chip(name,have){
   const b=document.createElement('button');
   b.className='chip'; b.dataset.c=name; b.textContent=name;
-  b.setAttribute('aria-pressed',String(name===pick));
   if(have===0){ b.disabled=true; b.title='still filling'; }   // -1 = unknown, still playable
-  b.onclick=()=>{ setPick(name); if(!busy) roll(); };
+  b.onclick=()=>{ togglePick(name); };   // pick lanes freely, then roll when ready
   return b;
 }
 
@@ -268,13 +290,14 @@ async function boot(){
     try{ await spExchange(code); }catch(e){}
     history.replaceState({},'',redirectUri());       // keep the URL clean
   }
-  spPaint();
   try{
     const meta=await loadMeta();
     CATS=meta.cats;
     const top=[...CATS].filter(c=>c.have!==0).sort((a,b)=>b.have-a.have).slice(0,6);
     lane.append(chip('any'), ...top.map(c=>chip(c.name,c.have)));
     all.append(...CATS.map(c=>chip(c.name,c.have)));
+    const known=new Set(CATS.map(c=>c.name));
+    [...picks].forEach(c=>{ if(!known.has(c)) picks.delete(c); });
     if(meta.provider){
       eyebrow.textContent=CATS.length+' genres from your '+meta.provider+' library';
     }else{
@@ -290,6 +313,8 @@ async function boot(){
     eyebrow.textContent='could not reach the roll service';
     plate.className='plate show'; plate.innerHTML='<p class="err">API unreachable: '+esc(e.message)+'</p>';
   }
+  paintPicks();
+  spPaint();
   face(5);
 }
 
@@ -308,9 +333,9 @@ async function roll(){
     let d;
     if(STATIC){
       await settle;
-      d=staticRoll(pick);
+      d=staticRoll(rollCat());
     }else{
-      const [res]=await Promise.all([fetch('api/roll?cat='+encodeURIComponent(pick)),settle]);
+      const [res]=await Promise.all([fetch('api/roll?cat='+encodeURIComponent(rollCat())),settle]);
       d=await res.json();
       if(!res.ok||d.error) throw new Error(d.error||('HTTP '+res.status));
     }

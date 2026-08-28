@@ -93,11 +93,19 @@ sudo systemctl enable --now spin-that-dice
 Put it behind a reverse proxy for TLS. `spin.py` serves the page itself, so a
 plain `reverse_proxy 127.0.0.1:8770` is enough.
 
-### On an iPad
+### On a tablet or phone
 
-Open the page in Safari → Share → **Add to Home Screen**. It launches
-full-screen with no browser chrome, and holds a screen wake lock so it won't
-sleep mid-party.
+- **iPad / iPhone:** Safari → Share → **Add to Home Screen**.
+- **Android:** Chrome → menu → **Install app** (a web app manifest ships with it).
+
+Either way it launches full-screen with no browser chrome and holds a screen
+wake lock so it won't sleep mid-party.
+
+### Choosing lanes
+
+Tap any number of categories to build the pool, then tap the die — each roll
+picks one of your chosen lanes at random. No selection means anything goes. Your
+choice is remembered on that device.
 
 ## Configuration
 
