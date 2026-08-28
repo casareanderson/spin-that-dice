@@ -385,6 +385,9 @@ function staticRoll(cat){
 }
 
 die.onclick=roll;
+die.addEventListener('keydown',e=>{
+  if(e.key==='Enter'||e.key===' '||e.code==='Space'){ e.preventDefault(); roll(); }
+});
 document.addEventListener('keydown',e=>{ if(e.code==='Space'||e.code==='Enter'){e.preventDefault(); roll();} });
 boot();
 </script>
