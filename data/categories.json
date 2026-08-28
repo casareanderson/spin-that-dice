@@ -2,30 +2,192 @@
 "90s Hip Hop": {
 "q": [
 "genre:\"hip hop\" year:1990-1999",
-"boom bap year:1990-1999",
 "east coast hip hop year:1991-1998",
-"golden era rap year:1990-1999"
+"west coast hip hop year:1992-1998"
 ]
 },
 "2000s Hip Hop": {
 "q": [
 "genre:\"hip hop\" year:2000-2009",
-"rap year:2000-2009",
-"hip hop classics year:2000-2008"
+"rap year:2000-2009"
 ]
 },
-"R&B": {
+"Jazz Rap": {
 "q": [
-"genre:r&b",
-"rnb slow jams",
-"r&b year:1995-2010",
-"contemporary r&b"
+"jazz rap",
+"native tongues",
+"a tribe called quest digable planets"
+]
+},
+"G-Funk": {
+"q": [
+"g-funk year:1992-1998",
+"west coast g funk"
+]
+},
+"UK Rap": {
+"q": [
+"uk rap",
+"uk hip hop",
+"british rap year:2010-2026"
+]
+},
+"Grime": {
+"q": [
+"grime",
+"genre:grime",
+"grime year:2003-2016"
+]
+},
+"UK Drill": {
+"q": [
+"uk drill",
+"drill year:2018-2026"
+]
+},
+"Trap": {
+"q": [
+"trap music",
+"genre:trap",
+"atlanta trap"
+]
+},
+"Dancehall": {
+"q": [
+"dancehall",
+"genre:dancehall",
+"dancehall year:1995-2010"
+]
+},
+"Bashment": {
+"q": [
+"bashment",
+"bashment party",
+"dancehall year:2010-2026"
+]
+},
+"Reggae": {
+"q": [
+"genre:reggae",
+"roots reggae",
+"reggae year:1970-1985"
+]
+},
+"Lovers Rock": {
+"q": [
+"lovers rock",
+"lovers rock reggae year:1976-1990"
+]
+},
+"Rocksteady": {
+"q": [
+"rocksteady year:1966-1970",
+"ska rocksteady jamaica"
+]
+},
+"Dub": {
+"q": [
+"genre:dub",
+"dub reggae year:1974-1985",
+"king tubby lee perry"
+]
+},
+"Ragga": {
+"q": [
+"ragga",
+"raggamuffin year:1988-1996"
+]
+},
+"Soca": {
+"q": [
+"soca",
+"trinidad soca",
+"soca year:2010-2026"
+]
+},
+"Calypso": {
+"q": [
+"calypso",
+"calypso year:1955-1980"
+]
+},
+"Afrobeats": {
+"q": [
+"afrobeats",
+"genre:afrobeats",
+"naija afrobeats",
+"afrobeats year:2015-2026"
+]
+},
+"Afrobeat": {
+"q": [
+"fela kuti afrobeat",
+"afrobeat year:1970-1985",
+"tony allen afrobeat"
+]
+},
+"Amapiano": {
+"q": [
+"amapiano",
+"amapiano year:2020-2026"
+]
+},
+"Afro House": {
+"q": [
+"afro house",
+"afro tech house",
+"south africa house"
+]
+},
+"Hiplife": {
+"q": [
+"hiplife",
+"ghana hiplife",
+"azonto hiplife"
+]
+},
+"Highlife": {
+"q": [
+"highlife ghana",
+"highlife nigeria",
+"palm wine highlife"
+]
+},
+"Kwaito": {
+"q": [
+"kwaito",
+"kwaito year:1995-2008"
+]
+},
+"Bongo Flava": {
+"q": [
+"bongo flava",
+"tanzania bongo flava"
+]
+},
+"Motown": {
+"q": [
+"motown",
+"motown year:1962-1972",
+"tamla motown"
+]
+},
+"Northern Soul": {
+"q": [
+"northern soul",
+"northern soul year:1965-1975"
+]
+},
+"Southern Soul": {
+"q": [
+"stax soul",
+"southern soul year:1962-1975",
+"muscle shoals soul"
 ]
 },
 "Soul": {
 "q": [
 "genre:soul",
-"northern soul",
 "classic soul year:1965-1979"
 ]
 },
@@ -43,260 +205,80 @@
 "funk year:1972-1984"
 ]
 },
-"Afrobeats": {
+"Boogie": {
 "q": [
-"afrobeats",
-"genre:afrobeats",
-"naija afrobeats",
-"afrobeats year:2015-2026"
+"boogie funk year:1979-1985",
+"electro funk boogie"
 ]
 },
-"Afro House": {
+"Quiet Storm": {
 "q": [
-"afro house",
-"amapiano house",
-"afro tech house"
+"quiet storm",
+"quiet storm soul year:1976-1990"
 ]
 },
-"Amapiano": {
+"R&B": {
 "q": [
-"amapiano",
-"amapiano year:2020-2026",
-"piano south africa amapiano"
+"genre:r&b",
+"r&b year:1995-2010",
+"contemporary r&b"
 ]
 },
-"Dancehall": {
+"90s R&B": {
 "q": [
-"dancehall",
-"genre:dancehall",
-"bashment dancehall"
+"r&b year:1990-1999",
+"90s rnb slow jams"
 ]
 },
-"Reggae": {
+"New Jack Swing": {
 "q": [
-"genre:reggae",
-"roots reggae",
-"reggae year:1970-1985",
-"lovers rock"
-]
-},
-"Hiplife": {
-"q": [
-"hiplife",
-"ghana hiplife",
-"azonto hiplife"
-]
-},
-"Highlife": {
-"q": [
-"highlife ghana",
-"highlife nigeria",
-"palm wine highlife"
-]
-},
-"UK Rap": {
-"q": [
-"uk rap",
-"uk hip hop",
-"british rap year:2010-2026"
-]
-},
-"Grime": {
-"q": [
-"grime",
-"genre:grime",
-"grime year:2003-2016"
-]
-},
-"UK Garage": {
-"q": [
-"uk garage",
-"2 step garage",
-"speed garage",
-"uk garage year:1997-2004"
-]
-},
-"Drill": {
-"q": [
-"uk drill",
-"drill year:2018-2026"
-]
-},
-"Trap": {
-"q": [
-"trap music",
-"genre:trap",
-"trap year:2013-2026"
-]
-},
-"House": {
-"q": [
-"genre:house",
-"classic house year:1988-1999",
-"deep house"
-]
-},
-"Techno": {
-"q": [
-"genre:techno",
-"detroit techno",
-"techno year:1990-2005"
-]
-},
-"Drum & Bass": {
-"q": [
-"drum and bass",
-"genre:\"drum and bass\"",
-"liquid drum and bass"
-]
-},
-"Jungle": {
-"q": [
-"jungle year:1992-1997",
-"ragga jungle",
-"genre:jungle"
-]
-},
-"Garage Rock": {
-"q": [
-"garage rock",
-"genre:\"garage rock\""
-]
-},
-"Rock": {
-"q": [
-"genre:rock",
-"classic rock year:1968-1985",
-"rock anthems"
-]
-},
-"Indie": {
-"q": [
-"genre:indie",
-"indie rock year:2004-2015",
-"indie pop"
-]
-},
-"Punk": {
-"q": [
-"genre:punk",
-"punk year:1977-1985"
-]
-},
-"Metal": {
-"q": [
-"genre:metal",
-"heavy metal year:1980-1995"
-]
-},
-"Pop": {
-"q": [
-"genre:pop",
-"pop hits",
-"pop year:2010-2026"
-]
-},
-"80s": {
-"q": [
-"year:1980-1989",
-"80s hits",
-"synth pop year:1980-1989"
-]
-},
-"90s Pop": {
-"q": [
-"pop year:1990-1999",
-"90s hits"
-]
-},
-"2000s Pop": {
-"q": [
-"pop year:2000-2009",
-"2000s hits"
-]
-},
-"Jazz": {
-"q": [
-"genre:jazz",
-"hard bop",
-"jazz year:1955-1969",
-"jazz funk"
-]
-},
-"Blues": {
-"q": [
-"genre:blues",
-"delta blues",
-"electric blues"
+"new jack swing",
+"new jack swing year:1988-1994"
 ]
 },
 "Gospel": {
 "q": [
 "genre:gospel",
 "gospel choir",
-"praise and worship"
+"quartet gospel"
 ]
 },
-"Country": {
+"Jazz Funk": {
 "q": [
-"genre:country",
-"outlaw country",
-"country year:1970-1990"
+"jazz funk year:1970-1980",
+"soul jazz",
+"acid jazz"
 ]
 },
-"Latin": {
+"Chicago House": {
 "q": [
-"genre:latin",
-"salsa",
-"cumbia",
-"latin year:1970-1995"
+"chicago house year:1985-1995",
+"classic house year:1988-1996"
 ]
 },
-"Reggaeton": {
+"Detroit Techno": {
 "q": [
-"reggaeton",
-"genre:reggaeton",
-"reggaeton year:2004-2026"
+"detroit techno",
+"techno year:1988-1998"
 ]
 },
-"Soca": {
+"UK Garage": {
 "q": [
-"soca",
-"trinidad soca",
-"soca year:2010-2026"
+"uk garage",
+"2 step garage",
+"uk garage year:1997-2004"
 ]
 },
-"K-Pop": {
+"Jungle": {
 "q": [
-"k-pop",
-"genre:k-pop"
+"jungle year:1992-1997",
+"ragga jungle"
 ]
 },
-"Bollywood": {
+"Drum & Bass": {
 "q": [
-"bollywood",
-"hindi film songs"
-]
-},
-"Lo-fi": {
-"q": [
-"lofi hip hop",
-"lo-fi beats",
-"chillhop"
-]
-},
-"Classical": {
-"q": [
-"genre:classical",
-"classical piano",
-"baroque"
-]
-},
-"Disco Party": {
-"q": [
-"party classics",
-"wedding party hits",
-"floor fillers"
+"drum and bass",
+"liquid drum and bass"
 ]
 }
 }

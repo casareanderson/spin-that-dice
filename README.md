@@ -1,7 +1,16 @@
 # spin-that-dice
 
-A party dice for Spotify. Tap the die, get a random track from a category, and it
-plays. Built for an iPad propped up at a party — black, one big target, no menus.
+A jukebox dice for Black music. Tap the die, get a random track from a category,
+and it plays. Built for a tablet propped up at a party — black, one big target,
+no menus, no browsing.
+
+The 43 categories are deliberately narrow rather than "every genre on Spotify":
+hip hop and UK rap, grime and drill, dancehall, bashment, lovers rock, dub and
+soca, afrobeats and afrobeat, amapiano, hiplife and highlife, kwaito, Motown,
+northern and southern soul, neo soul, funk, boogie, quiet storm, new jack swing,
+gospel, jazz funk, Chicago house, Detroit techno, UK garage and jungle. If you
+want punk in there, add it — a category is two lines in
+`data/categories.json`.
 
 Rolling **never calls the Spotify API**. A background thread builds a local index
 within a strict request budget; the die picks from that. A four-hour party costs
@@ -138,12 +147,8 @@ python3 -m unittest discover -s tests    # offline, no creds, no network
 
 ## Categories
 
-43, defined as search queries in `data/categories.json` — 90s and 2000s Hip Hop,
-R&B, Soul, Neo Soul, Funk & Disco, Afrobeats, Afro House, Amapiano, Dancehall,
-Reggae, Hiplife, Highlife, UK Rap, Grime, UK Garage, Drill, Trap, House, Techno,
-Drum & Bass, Jungle, Rock, Indie, Punk, Metal, Pop, 80s, 90s Pop, 2000s Pop,
-Jazz, Blues, Gospel, Country, Latin, Reggaeton, Soca, K-Pop, Bollywood, Lo-fi,
-Classical and more. Add your own by adding queries.
+43, defined as search queries in `data/categories.json`. Add or replace any of
+them by editing that file — nothing else changes.
 
 ## Optional: let people use their own Spotify
 
