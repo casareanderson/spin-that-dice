@@ -29,6 +29,41 @@ So this trades freshness for reliability:
 A 429 trips a circuit breaker that honours `Retry-After` and stops calling
 entirely until it expires. Rolls keep working the whole time.
 
+## Backends
+
+Spotify is the default, but it is the *worst* source for a dice: no real genres,
+a shared quota, and full playback needs every listener to have Premium. Point it
+at your own library instead and all three problems disappear.
+
+| `SPIN_PROVIDER` | Works with | Genres | Random track | Playback |
+|---|---|---|---|---|
+| `spotify` (default) | Spotify | faked from search queries | from a local index | embed, **Premium required** |
+| `subsonic` | Navidrome, Airsonic, Gonic, Ampache, LMS | real, from your tags | `getRandomSongs` — one call | your own files |
+| `jellyfin` | Jellyfin, Emby | real, from your tags | `sortBy=Random` | your own files |
+
+```bash
+SPIN_PROVIDER=subsonic \
+SPIN_SUBSONIC_URL=http://nas:4533 \
+SPIN_SUBSONIC_USER=you SPIN_SUBSONIC_PASSWORD=... python3 spin.py
+
+SPIN_PROVIDER=jellyfin \
+SPIN_JELLYFIN_URL=http://jf:8096 SPIN_JELLYFIN_TOKEN=... python3 spin.py
+```
+
+On these backends there is no index, no budget and no crate — the dice is a
+single API call, and audio streams through `/api/stream` so your server
+credentials never reach the browser and there is no CORS to configure. Subsonic
+passwords use salted token auth, never plaintext.
+
+> ⚠️ **Both are unverified against a live server.** They are written to the
+> published API specs and covered by offline tests with a stubbed transport, but
+> nobody has yet pointed them at a real Navidrome or Jellyfin. Expect to fix
+> something the first time you do — and please open an issue when you do.
+
+`providers.Subsonic.jukebox()` also implements Navidrome's jukebox mode, so
+audio can come out of the *server's* speakers with the tablet as a control
+surface. It is not wired to the UI yet.
+
 ## Setup
 
 ```bash

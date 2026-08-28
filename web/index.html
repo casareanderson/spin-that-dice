@@ -87,6 +87,7 @@ h1 em{font-style:normal; color:var(--accent)}
 .artist{color:var(--dim); margin:5px 0 0; font-size:15px}
 .embed{width:100%; min-height:80px; border-radius:12px; margin-top:15px; display:block; overflow:hidden}
 .embed iframe{border:0; border-radius:12px; display:block; width:100%}
+.audio{width:100%; margin-top:15px; border-radius:12px}
 .err{color:var(--bad); font-size:14px; margin:0}
 footer{margin-top:30px; color:#5C5A62; font-size:11px; font-family:"Space Mono",monospace; letter-spacing:.1em}
 </style>
@@ -112,6 +113,7 @@ footer{margin-top:30px; color:#5C5A62; font-size:11px; font-family:"Space Mono",
     <p class="track" id="pTrack"></p>
     <p class="artist" id="pArtist"></p>
     <div class="embed" id="player"></div>
+    <audio class="audio" id="audio" controls hidden></audio>
     <p class="err" id="pErr" hidden></p>
   </div>
   <footer id="foot"></footer>
@@ -127,6 +129,7 @@ const moreBtn=document.getElementById('moreBtn');
 
 let CATS=[], pick='any', busy=false;
 let STATIC=null;   // set when there is no /api (static build): {cat: [tracks]}
+const audio=document.getElementById('audio'), player=document.getElementById('player');
 const pCat=document.getElementById('pCat'), pYear=document.getElementById('pYear'),
       pHave=document.getElementById('pHave'), pTrack=document.getElementById('pTrack'),
       pArtist=document.getElementById('pArtist'), pErr=document.getElementById('pErr');
@@ -171,7 +174,7 @@ function chip(name,have){
   const b=document.createElement('button');
   b.className='chip'; b.dataset.c=name; b.textContent=name;
   b.setAttribute('aria-pressed',String(name===pick));
-  if(have===0){ b.disabled=true; b.title='still filling'; }
+  if(have===0){ b.disabled=true; b.title='still filling'; }   // -1 = unknown, still playable
   b.onclick=()=>{ setPick(name); if(!busy) roll(); };
   return b;
 }
@@ -192,11 +195,15 @@ async function boot(){
   try{
     const meta=await loadMeta();
     CATS=meta.cats;
-    const top=[...CATS].filter(c=>c.have>0).sort((a,b)=>b.have-a.have).slice(0,6);
+    const top=[...CATS].filter(c=>c.have!==0).sort((a,b)=>b.have-a.have).slice(0,6);
     lane.append(chip('any'), ...top.map(c=>chip(c.name,c.have)));
     all.append(...CATS.map(c=>chip(c.name,c.have)));
-    const total=CATS.reduce((n,c)=>n+c.have,0), ready=CATS.filter(c=>c.have).length;
-    eyebrow.textContent=total+' tracks indexed · '+ready+' of '+CATS.length+' categories ready';
+    if(meta.provider){
+      eyebrow.textContent=CATS.length+' genres from your '+meta.provider+' library';
+    }else{
+      const total=CATS.reduce((n,c)=>n+c.have,0), ready=CATS.filter(c=>c.have).length;
+      eyebrow.textContent=total+' tracks indexed · '+ready+' of '+CATS.length+' categories ready';
+    }
     foot.textContent=STATIC
       ? 'crate built '+(meta.built||'').slice(0,10)
       : (meta.blocked_min
@@ -237,9 +244,18 @@ async function roll(){
     pErr.hidden=true;
     pCat.textContent=d.cat;
     pYear.textContent=t.y||''; pYear.hidden=!t.y;
-    pHave.textContent=d.have+' in the crate';
+    if(d.have>=0){ pHave.hidden=false; pHave.textContent=d.have+' in the crate'; }
+    else pHave.hidden=true;
     pTrack.textContent=t.n; pArtist.textContent=t.a;
-    playUri('spotify:track:'+t.id);
+    if(t.stream){
+      // self-hosted backend: real audio, so autoplay is just a play() call
+      player.hidden=true; audio.hidden=false;
+      audio.src=t.stream;
+      audio.play().catch(()=>{});
+    }else{
+      audio.pause(); audio.hidden=true; player.hidden=false;
+      playUri('spotify:track:'+t.id);
+    }
   }catch(e){
     clearInterval(shuffle); face(1);
     plate.className='plate show';
