@@ -34,6 +34,8 @@ OUT.mkdir(parents=True, exist_ok=True)
     {"built": datetime.now(timezone.utc).isoformat(timespec="seconds"), "cats": out},
     ensure_ascii=False, separators=(",", ":")))
 shutil.copy(HERE / "web" / "index.html", OUT / "index.html")
+for extra in ("manifest.json", "icon-192.png", "icon-512.png"):
+    shutil.copy(HERE / "web" / extra, OUT / extra)
 if not (OUT / "config.json").exists():          # never clobber a deployed client id
     shutil.copy(HERE / "web" / "config.json", OUT / "config.json")
 (OUT / ".nojekyll").write_text("")
