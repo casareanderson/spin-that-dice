@@ -19,6 +19,8 @@ from urllib.parse import urlparse, parse_qs
 
 import requests
 
+import providers
+
 HERE = Path(__file__).resolve().parent
 DATA = Path(os.environ.get("SPIN_DATA", HERE / "data"))
 WEB = Path(os.environ.get("SPIN_WEB", HERE / "web"))
@@ -27,6 +29,10 @@ HOST = os.environ.get("SPIN_HOST", "127.0.0.1")
 MARKET = os.environ.get("SPIN_MARKET", "GB")
 TARGET = int(os.environ.get("SPIN_TARGET", "150"))          # tracks to hold per category
 CALLS_PER_HOUR = int(os.environ.get("SPIN_CALLS_PER_HOUR", "60"))
+
+# A self-hosted backend needs none of the index/budget machinery below: it has
+# real genres and a native random-track call, so the dice is one request.
+PROVIDER = providers.build()
 
 CATS = json.loads((DATA / "categories.json").read_text())
 SEED = json.loads((DATA / "crate.json").read_text()) if (DATA / "crate.json").exists() else {}
@@ -268,6 +274,57 @@ class H(BaseHTTPRequestHandler):
 
     def do_GET(self):
         u = urlparse(self.path)
+        if u.path == "/api/categories" and PROVIDER:
+            try:
+                return self._send(200, {"blocked_min": 0, "budget_left": 0,
+                                        "provider": PROVIDER.name,
+                                        "cats": [{"name": c, "have": -1}
+                                                 for c in PROVIDER.categories()]})
+            except Exception as e:
+                return self._send(503, {"error": f"{PROVIDER.name}: {e}"})
+        if u.path == "/api/roll" and PROVIDER:
+            cat = (parse_qs(u.query).get("cat") or [""])[0]
+            try:
+                cats = PROVIDER.categories()
+                if cat in ("", "any"):
+                    cat = random.choice(cats)
+                elif cat not in cats:
+                    return self._send(404, {"error": f"unknown category {cat!r}"})
+                t = PROVIDER.roll(cat)
+                t["stream"] = "api/stream?id=" + t["id"]
+                return self._send(200, {"cat": cat, "track": t, "have": -1})
+            except Exception as e:
+                return self._send(503, {"cat": cat, "error": f"{PROVIDER.name}: {e}"})
+        if u.path == "/api/stream" and PROVIDER:
+            tid = (parse_qs(u.query).get("id") or [""])[0]
+            if not tid:
+                return self._send(400, {"error": "missing id"})
+            try:
+                # proxied so server credentials never reach the browser
+                up, ctype = PROVIDER.stream(tid)
+            except Exception as e:
+                return self._send(502, {"error": f"{PROVIDER.name}: {e}"})
+            self.send_response(200)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Accept-Ranges", "none")
+            if up.headers.get("Content-Length"):
+                self.send_header("Content-Length", up.headers["Content-Length"])
+            else:
+                self.send_header("Transfer-Encoding", "chunked")
+            self.end_headers()
+            try:
+                for chunk in up.iter_content(64 * 1024):
+                    if not chunk:
+                        continue
+                    if up.headers.get("Content-Length"):
+                        self.wfile.write(chunk)
+                    else:
+                        self.wfile.write(b"%X\r\n" % len(chunk) + chunk + b"\r\n")
+                if not up.headers.get("Content-Length"):
+                    self.wfile.write(b"0\r\n\r\n")
+            except (BrokenPipeError, ConnectionResetError):
+                pass          # listener skipped to the next roll
+            return
         if u.path == "/api/categories":
             return self._send(200, {
                 "blocked_min": int(blocked_for() // 60),
@@ -298,7 +355,11 @@ class H(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    threading.Thread(target=topper, daemon=True).start()
-    sys.stderr.write(f"spin-that-dice on {HOST}:{PORT} - {len(CATS)} categories, "
-                     f"{sum(index.count(c) for c in CATS)} tracks indexed\n")
+    if PROVIDER:
+        sys.stderr.write(f"spin-that-dice on {HOST}:{PORT} - provider {PROVIDER.name}, "
+                         f"no index needed\n")
+    else:
+        threading.Thread(target=topper, daemon=True).start()
+        sys.stderr.write(f"spin-that-dice on {HOST}:{PORT} - spotify, {len(CATS)} categories, "
+                         f"{sum(index.count(c) for c in CATS)} tracks indexed\n")
     ThreadingHTTPServer((HOST, PORT), H).serve_forever()
