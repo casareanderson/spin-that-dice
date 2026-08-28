@@ -1,0 +1,4 @@
+spin.env
+data/index.json
+data/index.tmp
+__pycache__/

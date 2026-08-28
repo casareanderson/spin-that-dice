@@ -1,0 +1,14 @@
+[Unit]
+Description=spin-that-dice roll API
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/spin-that-dice/spin.py
+WorkingDirectory=/opt/spin-that-dice
+Restart=on-failure
+RestartSec=5
+Environment=SPIN_HOST=127.0.0.1
+Environment=SPIN_PORT=8770
+
+[Install]
+WantedBy=multi-user.target
