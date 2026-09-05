@@ -203,3 +203,13 @@ Sequencing a playlist so it flows is a separate tool:
 ## Licence
 
 MIT.
+
+---
+
+## The API changes, written up
+
+The November 2024 and February 2026 changes noted above are documented in full
+separately — including the response codes that mislead you and what each one actually means:
+
+**[The Spotify API, After the Break →](https://asareanderson.gumroad.com/l/taeoza)** ·
+[2-page cheat sheet](https://asareanderson.gumroad.com/l/yigsxw)
