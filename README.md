@@ -9,6 +9,17 @@ A jukebox dice for Black music: tap the die on a tablet at a party, get a random
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 ![Python 3](https://img.shields.io/badge/python-3-blue.svg)
 
+## Contents
+
+- [What it does](#what-it-does)
+- [Screenshots](#screenshots)
+- [Quick start](#quick-start)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [How it works](#how-it-works)
+- [Status, limits and real results](#status-limits-and-real-results)
+- [Licence and credits](#licence-and-credits)
+
 ## What it does
 
 - Picks a random track from a category you choose, or from any category, and plays it in the page.
