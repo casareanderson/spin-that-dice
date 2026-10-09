@@ -218,3 +218,5 @@ MIT, see [LICENSE](LICENSE).
 - Track metadata and playback come from the [Spotify Web API](https://developer.spotify.com/documentation/web-api) and [iFrame API](https://developer.spotify.com/documentation/embeds/tutorials/using-the-iframe-api), under Spotify's developer terms. The screenshot shows a Spotify embed as it renders on a roll.
 - Fonts: Anton, Karla and Space Mono, loaded from Google Fonts (SIL Open Font License).
 - HTTP client: [requests](https://github.com/psf/requests) (Apache 2.0).
+
+If this is useful to you, [buy me a coffee](https://buymeacoffee.com/iamc_tech) ☕
