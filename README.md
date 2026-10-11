@@ -39,6 +39,8 @@ A jukebox dice for Black music: tap the die on a tablet at a party, get a random
 
 ## Quick start
 
+Full step-by-step guide, tested on a fresh machine every week: [docs/SETUP.md](docs/SETUP.md).
+
 You need Python 3 and the `requests` package. A Spotify app is optional for the first run.
 
 ```bash
