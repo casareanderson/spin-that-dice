@@ -8,6 +8,7 @@ A jukebox dice for Black music: tap the die on a tablet at a party, get a random
 
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 ![Python 3](https://img.shields.io/badge/python-3-blue.svg)
+[![Buy Me a Coffee](https://raw.githubusercontent.com/casareanderson/.github/main/badges/bmc-yellow.svg)](https://buymeacoffee.com/iamc_tech)
 
 ## Contents
 
