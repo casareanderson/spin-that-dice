@@ -147,6 +147,8 @@ Environment variables, read in `spin.py`, `providers.py` and `export.py`:
 | `SPIN_SUBSONIC_URL` / `_USER` / `_PASSWORD` | none | Subsonic-compatible server |
 | `SPIN_JELLYFIN_URL` / `SPIN_JELLYFIN_TOKEN` | none | Jellyfin or Emby server |
 | `SPIN_DOMAIN` | none | `export.py` writes it to `docs/CNAME` when set |
+| `SPIN_REPO` | the script's folder | `republish.sh`: the checkout whose `docs/` GitHub Pages serves |
+| `SPIN_NOTIFY` | none | `republish.sh`: a command run with one message after a publish, e.g. a chat webhook script |
 
 Page settings live in `web/config.json` (`spotify_client_id`, empty by default).
 

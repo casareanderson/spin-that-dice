@@ -3,11 +3,15 @@
 # Deterministic on purpose: no model decides whether this ran.
 set -euo pipefail
 
-INDEX_DIR=${SPIN_DATA:-/opt/spin-that-dice/data}
-REPO=${SPIN_REPO:-/root/spin-that-dice}
-DOMAIN=${SPIN_DOMAIN:-spin-that-dice.cn1-lab.uk}
+HERE=$(cd "$(dirname "$0")" && pwd)
+REPO=${SPIN_REPO:-$HERE}                 # the git checkout that GitHub Pages serves docs/ from
+INDEX_DIR=${SPIN_DATA:-$REPO/data}       # where spin.py keeps the growing index
+DOMAIN=${SPIN_DOMAIN:-}                  # custom Pages domain; empty = no CNAME, no link in the notice
+NOTIFY=${SPIN_NOTIFY:-}                  # optional command, called with one message argument
 
 cd "$REPO"
+# Someone else may have pushed (docs, README). Catch up first or the push below is rejected.
+git pull -q --rebase --autostash origin main
 before=$(python3 -c "
 import json,sys
 try: d=json.load(open('docs/index.json'))
@@ -48,9 +52,9 @@ git -c user.name=casareanderson -c user.email=51646180+casareanderson@users.nore
 git push -q origin main
 echo "published: $before -> $after tracks, $ready categories"
 
-# tell the estate, but never let a failed notification hide a successful publish
-if [ -x /opt/hermes-agent/notify.py ] || [ -f /opt/hermes-agent/notify.py ]; then
-  python3 /opt/hermes-agent/notify.py \
-    "spin-that-dice republished: $after tracks, $ready categories - https://$DOMAIN" \
+# say so if asked to, but never let a failed notification hide a successful publish
+if [ -n "$NOTIFY" ]; then
+  # shellcheck disable=SC2086  # NOTIFY is a command line, word-splitting is intended
+  $NOTIFY "spin-that-dice republished: $after tracks, $ready categories${DOMAIN:+ - https://$DOMAIN}" \
     >/dev/null 2>&1 || echo "(notify failed, publish still succeeded)"
 fi
