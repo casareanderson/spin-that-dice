@@ -11,7 +11,7 @@ keeps growing toward "the whole catalogue" between parties.
 Spotify's quota window re-arms if you keep calling while throttled, so a 429
 trips a circuit breaker that honours Retry-After and stops calling entirely.
 """
-import json, os, random, re, sys, threading, time
+import json, os, random, re, signal, sys, threading, time
 from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -115,9 +115,38 @@ class Budget:
 
 
 budget = Budget(CALLS_PER_HOUR)
-_blocked_until = 0.0
+_block_path = DATA / ".blocker.json"       # persistent 429 circuit breaker
+
+
+def _load_blocked():
+    """Restore _blocked_until from disk as an ABSOLUTE epoch timestamp.
+
+    ⚠️ UNITS. _save_blocked() writes an absolute time, and blocked_for()
+    computes `_blocked_until - time.time()`. An earlier version of this
+    function returned the REMAINING seconds instead, which silently made the
+    whole breaker a no-op: a restored value of 3600 is far in the past as an
+    absolute time, so blocked_for() returned 0 and the process called Spotify
+    immediately -- re-arming the very quota window this exists to protect.
+    Return the same unit that was written.
+    """
+    try:
+        t = float(json.loads(_block_path.read_text()))
+        return t if t > time.time() else 0.0
+    except Exception:
+        return 0.0
+
+
+_blocked_until = _load_blocked()
 _tok = {"v": None, "exp": 0.0}
 _tlock = threading.Lock()
+
+
+def _save_blocked():
+    """Persist current _blocked_until (absolute timestamp) to disk."""
+    try:
+        _block_path.write_text(json.dumps(_blocked_until))
+    except Exception:
+        pass          # non-fatal — disk is best-effort
 
 
 def blocked_for():
@@ -219,6 +248,7 @@ def fetch(cat):
     if r.status_code == 429:
         wait = int(r.headers.get("Retry-After", "3600") or 3600)
         _blocked_until = time.time() + wait
+        _save_blocked()          # persist before raising so restarts honour it
         raise RuntimeError(f"429 quota, {wait // 3600}h{wait % 3600 // 60:02d}m")
     r.raise_for_status()
     items = [t for t in (r.json().get("tracks") or {}).get("items") or [] if t and t.get("id")]
@@ -231,12 +261,29 @@ def fetch(cat):
     return index.add(cat, clean, offset)
 
 
+_topper_save_count = 0
+_TOPPER_SAVE_INTERVAL = 5          # save index after N successful adds
+
+
+def _maybe_save_index():
+    """Save the index every _TOPPER_SAVE_INTERVAL successful adds."""
+    global _topper_save_count
+    _topper_save_count += 1
+    if _topper_save_count >= _TOPPER_SAVE_INTERVAL:
+        _topper_save_count = 0
+        index.save()
+
+
 def topper():
     """Background top-up. Fills the thinnest categories first, within budget."""
+    global _blocked_until
     while True:
         try:
             dirty = False
             if not blocked_for():
+                # Clear persisted blocker once we're unblocked (survives restarts)
+                if _block_path.exists():
+                    _block_path.unlink(missing_ok=True)
                 thin = sorted(CATS, key=index.count)
                 for cat in thin:
                     if index.count(cat) >= TARGET:
@@ -247,12 +294,13 @@ def topper():
                         n = fetch(cat)
                         sys.stderr.write(f"topup {cat}: +{n} (now {index.count(cat)})\n")
                         dirty = True
+                        _maybe_save_index()     # persist frequently, not just per-pass
                     except Exception as e:
                         sys.stderr.write(f"topup {cat} failed: {e}\n")
                         break
                     time.sleep(2)
                 if dirty:
-                    index.save()   # one write per pass, not one per request
+                    index.save()
         except Exception as e:
             sys.stderr.write(f"topper: {e}\n")
         time.sleep(30)
@@ -362,4 +410,14 @@ if __name__ == "__main__":
         threading.Thread(target=topper, daemon=True).start()
         sys.stderr.write(f"spin-that-dice on {HOST}:{PORT} - spotify, {len(CATS)} categories, "
                          f"{sum(index.count(c) for c in CATS)} tracks indexed\n")
+
+    def _shutdown(signum, frame):
+        sys.stderr.write("shutting down — persisting state\n")
+        index.save()
+        # Do NOT unlink the blocker here: if we were shut down during a 429,
+        # the persisted timestamp must survive to the next restart.
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, _shutdown)
+    signal.signal(signal.SIGTERM, _shutdown)
     ThreadingHTTPServer((HOST, PORT), H).serve_forever()
