@@ -225,3 +225,7 @@ MIT, see [LICENSE](LICENSE).
 - HTTP client: [requests](https://github.com/psf/requests) (Apache 2.0).
 
 If this is useful to you, [buy me a coffee](https://buymeacoffee.com/iamc_tech) ☕
+
+---
+
+More homelab field notes: https://iamtech.cn1-lab.uk
